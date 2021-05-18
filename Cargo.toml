@@ -9,6 +9,10 @@ edition = "2018"
 [dependencies]
 libc = "0.2"
 pyo3 = { version = "0.13", features = ["extension-module"] }
+chrono = "0.4.6"
+serde = "1.0.89"
+serde_derive = "1.0.89"
+futures = "0.1.26"
 
 [lib]
 crate-type = ["cdylib"]
