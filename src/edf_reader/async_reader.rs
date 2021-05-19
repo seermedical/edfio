@@ -1,11 +1,12 @@
 //! Read an EDF file asynhronously (with futures)
 
 use crate::file_reader::AsyncFileReader;
-use crate::model::{EDFHeader, EDF_HEADER_BYTE_SIZE};
+use crate::edf_reader::model::{EDFHeader, EDF_HEADER_BYTE_SIZE};
 
 use futures::future::err;
 use futures::Future;
 use std::io::Error;
+use std::convert::TryInto;
 
 pub struct AsyncEDFReader<T: AsyncFileReader> {
     pub edf_header: EDFHeader,
@@ -20,7 +21,7 @@ impl<T: 'static + AsyncFileReader> AsyncEDFReader<T> {
     */
     pub fn init_with_file_reader(
         file_reader: T,
-    ) -> Box<Future<Item = AsyncEDFReader<T>, Error = std::io::Error>> {
+    ) -> Box<dyn Future<Item = AsyncEDFReader<T>, Error = std::io::Error>> {
         Box::new(
             file_reader
                 .read_async(0, 256)
@@ -30,7 +31,7 @@ impl<T: 'static + AsyncFileReader> AsyncEDFReader<T> {
                     file_reader
                         .read_async(
                             256,
-                            edf_header.number_of_signals * EDF_HEADER_BYTE_SIZE as u64,
+                            (edf_header.number_of_signals * EDF_HEADER_BYTE_SIZE).try_into().unwrap(),
                         )
                         .map(|channel_headers_raw| {
                             edf_header.build_channel_headers(channel_headers_raw);
@@ -50,7 +51,7 @@ impl<T: 'static + AsyncFileReader> AsyncEDFReader<T> {
         &self,
         start_time_ms: u64, // in mS
         duration_ms: u64,   // in mS
-    ) -> Box<Future<Item = Vec<Vec<f32>>, Error = std::io::Error>> {
+    ) -> Box<dyn Future<Item = Vec<Vec<f32>>, Error = std::io::Error>> {
         // check boundaries
         if let Err(e) = super::check_bounds(start_time_ms, duration_ms, &self.edf_header) {
             return Box::new(err::<Vec<Vec<f32>>, Error>(e));
@@ -74,7 +75,7 @@ impl<T: 'static + AsyncFileReader> AsyncEDFReader<T> {
             self.file_reader
                 .read_async(
                     offset,
-                    number_of_blocks_to_get * self.edf_header.get_size_of_data_block(),
+                    (number_of_blocks_to_get * self.edf_header.get_size_of_data_block()).try_into().unwrap(),
                 )
                 .map(move |data: Vec<u8>| {
                     let mut result: Vec<Vec<f32>> = Vec::new();

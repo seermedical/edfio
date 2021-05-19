@@ -1,10 +1,10 @@
 //! Metadata structures of an EDF file
 
-use crate::parser::Parser;
+use crate::edf_reader::parser::Parser;
 use chrono::prelude::*;
 use chrono::Utc;
 
-pub const EDF_HEADER_BYTE_SIZE: usize = 256;
+pub const EDF_HEADER_BYTE_SIZE: u64 = 256;
 
 #[derive(Serialize, Deserialize, Debug,Clone,PartialEq)]
 pub struct EDFChannel {

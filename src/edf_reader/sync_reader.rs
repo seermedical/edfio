@@ -1,10 +1,11 @@
 //! Read an EDF file synchronously
 
-use crate::file_reader::SyncFileReader;
-
-use crate::model::*;
-
 use std::io::Error;
+use std::convert::TryInto;
+
+use crate::edf_reader::file_reader::SyncFileReader;
+use crate::edf_reader::model::{EDFHeader, EDF_HEADER_BYTE_SIZE};
+
 
 pub struct SyncEDFReader<T: SyncFileReader> {
     pub edf_header: EDFHeader,
@@ -24,7 +25,7 @@ impl<T: SyncFileReader> SyncEDFReader<T> {
 
         let channel_headers_raw = file_reader.read(
             256,
-            edf_header.number_of_signals * EDF_HEADER_BYTE_SIZE as u64,
+            (edf_header.number_of_signals * EDF_HEADER_BYTE_SIZE).try_into().unwrap(),
         )?;
 
         edf_header.build_channel_headers(channel_headers_raw);
@@ -54,13 +55,13 @@ impl<T: SyncFileReader> SyncEDFReader<T> {
         let offset = self.edf_header.byte_size_header
             + first_block_index * self.edf_header.get_size_of_data_block();
 
-        let mut data;
+        let data;
 
         // TODO : better handle of errors
 
         match self.file_reader.read(
             offset,
-            number_of_blocks_to_get * self.edf_header.get_size_of_data_block(),
+            (number_of_blocks_to_get * self.edf_header.get_size_of_data_block()).try_into().unwrap(),
         ) {
             Ok(d) => data = d,
             Err(e) => return Err(e),
