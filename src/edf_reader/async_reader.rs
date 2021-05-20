@@ -1,6 +1,6 @@
 //! Read an EDF file asynhronously (with futures)
 
-use crate::file_reader::AsyncFileReader;
+use crate::edf_reader::file_reader::AsyncFileReader;
 use crate::edf_reader::model::{EDFHeader, EDF_HEADER_BYTE_SIZE};
 
 use futures::future::err;

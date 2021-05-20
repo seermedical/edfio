@@ -3,6 +3,7 @@
 use std::io::Error;
 use std::convert::TryInto;
 use pyo3::prelude::*;
+use neon::prelude::*;
 
 use std::fs::File;
 use buffered_offset_reader::{BufOffsetReader, OffsetReadMut};
@@ -106,4 +107,73 @@ impl SyncEDFReader {
 
         Ok(result)
     }
+}
+
+pub fn read_edf(mut cx: FunctionContext) -> JsResult<JsObject> {
+    let filename = cx.argument::<JsString>(0)?.value(&mut cx);
+    let reader = SyncEDFReader {
+        filename,
+    };
+
+    let exported_reader = JsObject::new(&mut cx);
+    let js_filename = cx.string(&reader.filename);
+    exported_reader.set(&mut cx, "filename", js_filename).unwrap();
+
+    let header = reader.header().unwrap();
+    let exported_header = JsObject::new(&mut cx);
+
+    let file_version = cx.string(header.file_version);
+    exported_header.set(&mut cx, "fileVersion", file_version).unwrap();
+    let local_patient_identification = cx.string(header.local_patient_identification);
+    exported_header.set(&mut cx, "localPatientIdentification", local_patient_identification).unwrap();
+    let local_recording_identification = cx.string(header.local_recording_identification);
+    exported_header.set(&mut cx, "localRecordingIdentification", local_recording_identification).unwrap();
+    let start_date = cx.string(header.start_date);
+    exported_header.set(&mut cx, "startDate", start_date).unwrap();
+    let start_time = cx.string(header.start_time);
+    exported_header.set(&mut cx, "startTime", start_time).unwrap();
+    let record_start_time_in_ms = cx.number(header.record_start_time_in_ms as f64);
+    exported_header.set(&mut cx, "recordStartTimeInMs", record_start_time_in_ms).unwrap();
+    let byte_size_header = cx.number(header.byte_size_header as f64);
+    exported_header.set(&mut cx, "byteSizeHeader", byte_size_header).unwrap();
+    let number_of_blocks = cx.number(header.number_of_blocks as f64);
+    exported_header.set(&mut cx, "numberOfBlocks", number_of_blocks).unwrap();
+    let block_duration = cx.number(header.block_duration as f64);
+    exported_header.set(&mut cx, "blockDuration", block_duration).unwrap();
+    let number_of_signals = cx.number(header.number_of_signals as f64);
+    exported_header.set(&mut cx, "numberOfSignals", number_of_signals).unwrap();
+
+    let exported_channels = JsArray::new(&mut cx, header.channels.len() as u32);
+
+    for (i, channel) in header.channels.iter().enumerate() {
+        let exported_channel = JsObject::new(&mut cx);
+
+        let label = cx.string(&channel.label);
+        exported_channel.set(&mut cx, "label", label).unwrap();
+        let transducter_type = cx.string(&channel.transducter_type);
+        exported_channel.set(&mut cx, "transducterType", transducter_type).unwrap();
+        let physical_dimension = cx.string(&channel.physical_dimension);
+        exported_channel.set(&mut cx, "physicalDimension", physical_dimension).unwrap();
+        let physical_minimum = cx.number(channel.physical_minimum as f64);
+        exported_channel.set(&mut cx, "physicalMinimum", physical_minimum).unwrap();
+        let physical_maximum = cx.number(channel.physical_maximum as f64);
+        exported_channel.set(&mut cx, "physicalMaximum", physical_maximum).unwrap();
+        let digital_minimum = cx.number(channel.digital_minimum as f64);
+        exported_channel.set(&mut cx, "digitalMinimum", digital_minimum).unwrap();
+        let digital_maximum = cx.number(channel.digital_maximum as f64);
+        exported_channel.set(&mut cx, "digitalMaximum", digital_maximum).unwrap();
+        let prefiltering = cx.string(&channel.prefiltering);
+        exported_channel.set(&mut cx, "prefiltering", prefiltering).unwrap();
+        let number_of_samples_in_data_record = cx.number(channel.number_of_samples_in_data_record as f64);
+        exported_channel.set(&mut cx, "numberOfSamplesInDataRecord", number_of_samples_in_data_record).unwrap();
+        let scale_factor = cx.number(channel.scale_factor as f64);
+        exported_channel.set(&mut cx, "scaleFactor", scale_factor).unwrap();
+
+        exported_channels.set(&mut cx, i as u32, exported_channel).unwrap();
+    }
+
+    exported_header.set(&mut cx, "channels", exported_channels).unwrap();
+
+    exported_reader.set(&mut cx, "header", exported_header).unwrap();
+    Ok(exported_reader)
 }
