@@ -3,20 +3,32 @@
 use crate::edf_reader::parser::Parser;
 use chrono::prelude::*;
 use chrono::Utc;
+use pyo3::prelude::*;
 
 pub const EDF_HEADER_BYTE_SIZE: u64 = 256;
 
+#[pyclass(dict)]
 #[derive(Serialize, Deserialize, Debug,Clone,PartialEq)]
 pub struct EDFChannel {
+    #[pyo3(get, set)]
     pub label: String,                         // 16 ascii
+    #[pyo3(get, set)]
     pub transducter_type: String,              // 80 ascii
+    #[pyo3(get, set)]
     pub physical_dimension: String,            // 8 ascii
+    #[pyo3(get, set)]
     pub physical_minimum: f32,                 // 8 ascii
+    #[pyo3(get, set)]
     pub physical_maximum: f32,                 // 8 ascii
+    #[pyo3(get, set)]
     pub digital_minimum: i64,                  // 8 ascii
+    #[pyo3(get, set)]
     pub digital_maximum: i64,                  // 8 ascii
+    #[pyo3(get, set)]
     pub prefiltering: String,                  // 80 ascii
+    #[pyo3(get, set)]
     pub number_of_samples_in_data_record: u64, // 8 ascii
+    #[pyo3(get, set)]
     pub scale_factor: f32,
 }
 
@@ -25,19 +37,30 @@ pub struct EDFChannel {
  *  - 256 bytes of common metadata
  *  - NumberOfChannels * channel metadata = N * 256 bytes
  */
+#[pyclass(dict)]
 #[derive(Serialize, Deserialize, Debug,Clone,PartialEq)]
 pub struct EDFHeader {
+    #[pyo3(get, set)]
     pub file_version: String,
+    #[pyo3(get, set)]
     pub local_patient_identification: String,
+    #[pyo3(get, set)]
     pub local_recording_identification: String,
+    #[pyo3(get, set)]
     pub start_date: String,
+    #[pyo3(get, set)]
     pub start_time: String,
+    #[pyo3(get, set)]
     pub record_start_time_in_ms: i64,
+    #[pyo3(get, set)]
     pub byte_size_header: u64,
+    #[pyo3(get, set)]
     pub number_of_blocks: u64,
+    #[pyo3(get, set)]
     pub block_duration: u64,
+    #[pyo3(get, set)]
     pub number_of_signals: u64,
-
+    #[pyo3(get, set)]
     pub channels: Vec<EDFChannel>,
 }
 
