@@ -7,31 +7,15 @@
 extern crate chrono;
 extern crate futures;
 
-pub mod async_reader;
 pub mod file_reader;
-pub mod model;
-pub mod sync_reader;
 mod parser;
+pub mod python_reader;
+pub mod js_reader;
 
 use std::mem::transmute;
 
-use model::EDFHeader;
-
-use std::io::{Error, ErrorKind};
-
 fn get_sample(data: &Vec<u8>, index: usize) -> i16 {
     unsafe { transmute::<[u8; 2], i16>([data[2 * index].to_le(), data[2 * index + 1].to_le()]) }
-}
-
-fn check_bounds(start_time: u64, duration: u64, edf_header: &EDFHeader) -> Result<(), Error> {
-    if start_time + duration > edf_header.block_duration * edf_header.number_of_blocks {
-        return Err(Error::new(
-            ErrorKind::InvalidInput,
-            "Window is out of bounds",
-        ));
-    } else {
-        Ok(())
-    }
 }
 
 #[cfg(test)]
